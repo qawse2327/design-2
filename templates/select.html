@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>의류 선택</title>
+<style>
+body { background:#000; color:white; text-align:center; font-family:"Noto Sans KR", sans-serif; }
+.grid img { width:120px; cursor:pointer; margin:5px; border-radius:10px; }
+.grid img.selected { outline:3px solid #00ffcc; box-shadow:0 0 15px #00ffcc; }
+button { margin:10px; padding:10px 20px; cursor:pointer; font-size:16px; }
+</style>
+</head>
+<body>
+<h1>의류 선택</h1>
+
+<h2>상의</h2>
+<div class="grid">
+{% for top in tops %}
+<img src="{{ top }}" onclick="selectItem(this, 'top')">
+{% endfor %}
+</div>
+
+<h2>하의</h2>
+<div class="grid">
+{% for bottom in bottoms %}
+<img src="{{ bottom }}" onclick="selectItem(this, 'bottom')">
+{% endfor %}
+</div>
+
+<button onclick="wearSelected()">착용</button>
+
+<div id="result"></div>
+
+<script>
+let selectedTop = null, selectedBottom = null;
+
+function selectItem(img, type){
+  if(type=="top"){
+    if(selectedTop) selectedTop.classList.remove("selected");
+    selectedTop = img;
+  } else {
+    if(selectedBottom) selectedBottom.classList.remove("selected");
+    selectedBottom = img;
+  }
+  img.classList.add("selected");
+}
+
+function wearSelected(){
+  if(!selectedTop && !selectedBottom) return alert("옷을 선택해주세요!");
+  let mode = selectedTop && selectedBottom ? "both" : selectedTop ? "top" : "bottom";
+  let data = {top: selectedTop?.src, bottom: selectedBottom?.src, mode};
+  fetch("/tryon", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)})
+    .then(res => res.json())
+    .then(res => {
+      document.getElementById("result").innerHTML = `<img src="${res.result}" width="350">`;
+    });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>촬영 화면</title>
+<style>
+body { background:#000; color:white; text-align:center; font-family:"Noto Sans KR", sans-serif; }
+video { width:300px; margin-top:20px; }
+#preview img { width:300px; margin-top:10px; }
+button { margin:10px; padding:10px 20px; cursor:pointer; font-size:16px; }
+</style>
+</head>
+<body>
+<h1>촬영 화면</h1>
+<video id="video" autoplay></video>
+<div id="preview"></div>
+<button onclick="capture()">5초 뒤 촬영</button>
+<button onclick="location.href='/select'">다음</button>
+
+<script>
+let video = document.getElementById("video");
+let canvas = document.createElement("canvas");
+
+navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}})
+  .then(stream => video.srcObject = stream);
+
+function capture(){
+  document.getElementById("preview").innerHTML = "5초 뒤 촬영 중...";
+  setTimeout(()=>{
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+    let image = canvas.toDataURL("image/jpeg");
+    document.getElementById("preview").innerHTML = `<img src="${image}">`;
+    fetch("/upload", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({image})
+    });
+  }, 5000);
+}
+</script>
+</body>
+</html>
