@@ -17,7 +17,7 @@ body {
     flex-wrap:wrap; 
     justify-content:center; 
     overflow-y:auto; 
-    max-height:70vh; /* 스마트미러 세로 화면에 맞춤 */
+    max-height:70vh;
     margin-bottom:10px;
 }
 .grid img { 
@@ -27,10 +27,10 @@ body {
     cursor:pointer; 
     margin:5px; 
     border-radius:10px; 
-    transition: 0.3s all;
+    transition:0.3s all;
 }
 .grid img.selected { 
-    outline:3px solid #0ff; /* 야광 청록색 */
+    outline:3px solid #0ff; 
     box-shadow:0 0 15px #0ff, 0 0 25px #0ff, 0 0 35px #0ff;
 }
 button { 
@@ -42,8 +42,8 @@ button {
     border-radius:8px; 
     background:#111; 
     color:#0ff; 
-    text-shadow: 0 0 5px #0ff, 0 0 10px #0ff; /* 야광 효과 */
-    transition: 0.3s all;
+    text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
+    transition:0.3s all;
 }
 button:hover {
     box-shadow:0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
@@ -78,33 +78,57 @@ h2 {
 let selectedTop = null, selectedBottom = null;
 
 function selectItem(img, type){
-  if(type=="top"){
-    if(selectedTop) selectedTop.classList.remove("selected");
-    selectedTop = img;
-  } else {
-    if(selectedBottom) selectedBottom.classList.remove("selected");
-    selectedBottom = img;
-  }
-  img.classList.add("selected");
+    if(type=="top"){
+        if(selectedTop) selectedTop.classList.remove("selected");
+        selectedTop = img;
+    } else {
+        if(selectedBottom) selectedBottom.classList.remove("selected");
+        selectedBottom = img;
+    }
+    img.classList.add("selected");
 }
 
 function wearSelected(){
-  if(!selectedTop && !selectedBottom) return alert("옷을 선택해주세요!");
-  let mode = selectedTop && selectedBottom ? "both" : selectedTop ? "top" : "bottom";
-  let data = {top: selectedTop?.src, bottom: selectedBottom?.src, mode};
+    console.log("DEBUG: wearSelected 호출"); // 함수 호출 확인
+    if(!selectedTop && !selectedBottom) return alert("옷을 선택해주세요!");
+    let mode = selectedTop && selectedBottom ? "both" : selectedTop ? "top" : "bottom";
+    
+    // [수정됨] top.src는 'http://...' 전체 주소를 포함할 수 있으므로, 
+    // 서버가 알아들을 수 있게 'static/...' 부분만 잘라서 보냅니다.
+    // URL 객체를 사용해 'pathname'만 추출 (예: /static/tops/top1.png)
+    //
+    // ※ 중요: 이 로직은 Live Server (http://127.0.0.1:5500/...) 환경에서는
+    //    정상 작동하지만, 'file://' 환경에서는 작동하지 않습니다.
+    //    하지만 어차피 이 앱은 서버로 실행해야 하므로 괜찮습니다.
+    let topSrc = selectedTop ? new URL(selectedTop.src).pathname.substring(1) : null;
+    let bottomSrc = selectedBottom ? new URL(selectedBottom.src).pathname.substring(1) : null;
+    
+    // 만약 pathname이 /로 시작하면 (예: /static/...) 첫 글자(/)를 제거
+    if (topSrc && topSrc.startsWith('/')) topSrc = topSrc.substring(1);
+    if (bottomSrc && bottomSrc.startsWith('/')) bottomSrc = bottomSrc.substring(1);
 
-  fetch("/tryon", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)})
+    let data = {top: topSrc, bottom: bottomSrc, mode};
+    console.log("DEBUG: fetch 전송 데이터", data);
+
+    fetch("/tryon", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(data)
+    })
     .then(res => res.json())
     .then(res => {
-      if(res.result){
-        window.location.href = "/result"; // 합성 결과 페이지로 이동
-      } else {
-        alert("합성에 실패했습니다. 다시 시도해주세요.");
-      }
+        console.log("DEBUG: fetch 결과", res);
+        if(res.result){
+            // [수정됨] res.result (예: static/results/result_123.jpg) 경로를
+            // 쿼리 파라미터로 담아서 /result 페이지로 이동합니다.
+            window.location.href = "/result?image=" + res.result;
+        } else {
+            alert(res.error || "합성에 실패했습니다. 다시 시도해주세요.");
+        }
     })
     .catch(err => {
-      console.error(err);
-      alert("서버 오류 발생! 다시 시도해주세요.");
+        console.error("DEBUG: fetch 에러", err);
+        alert("서버 오류 발생! 다시 시도해주세요.");
     });
 }
 </script>
