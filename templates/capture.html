@@ -4,40 +4,117 @@
 <meta charset="UTF-8">
 <title>촬영 화면</title>
 <style>
-body { background:#000; color:white; text-align:center; font-family:"Noto Sans KR", sans-serif; }
-video { width:300px; margin-top:20px; }
-#preview img { width:300px; margin-top:10px; }
-button { margin:10px; padding:10px 20px; cursor:pointer; font-size:16px; }
+body { 
+    background:#000; 
+    color:white; 
+    text-align:center; 
+    font-family:"Noto Sans KR", sans-serif; 
+}
+video, #preview img { 
+    width:300px; 
+    border-radius:10px; 
+    transition: 0.5s all;
+}
+
+/* preview div 안의 이미지 테두리 스타일 */
+#preview img.video-neon {
+    box-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff, 0 0 40px #0ff;
+    border: 2px solid #0ff;
+}
+
+button { 
+    margin:10px; 
+    padding:10px 20px; 
+    cursor:pointer; 
+    font-size:16px; 
+    border:none; 
+    border-radius:8px; 
+}
+
+/* 중앙 카운트다운 숫자 스타일 */
+#countdown {
+    font-size:50px;
+    color:#0ff; /* 야광 청록색 */
+    margin-top:10px;
+    font-weight:bold;
+    text-shadow: 
+        0 0 5px #0ff,
+        0 0 10px #0ff,
+        0 0 15px #0ff,
+        0 0 20px #0ff;
+}
+
+/* video 야광 테두리 */
+.video-neon {
+    box-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff, 0 0 40px #0ff;
+    border: 2px solid #0ff;
+}
 </style>
 </head>
 <body>
 <h1>촬영 화면</h1>
+
 <video id="video" autoplay></video>
+<div id="countdown"></div>
 <div id="preview"></div>
-<button onclick="capture()">5초 뒤 촬영</button>
+
+<button onclick="startCountdown()">5초 뒤 촬영</button>
 <button onclick="location.href='/select'">다음</button>
 
 <script>
 let video = document.getElementById("video");
 let canvas = document.createElement("canvas");
+let countdownEl = document.getElementById("countdown");
+let previewDiv = document.getElementById("preview");
 
+// 카메라 접근
 navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}})
-  .then(stream => video.srcObject = stream);
+  .then(stream => video.srcObject = stream)
+  .catch(err => alert("카메라 접근 실패: " + err));
 
-function capture(){
-  document.getElementById("preview").innerHTML = "5초 뒤 촬영 중...";
-  setTimeout(()=>{
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-    let image = canvas.toDataURL("image/jpeg");
-    document.getElementById("preview").innerHTML = `<img src="${image}">`;
-    fetch("/upload", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({image})
-    });
-  }, 5000);
+function startCountdown() {
+  let count = 5;
+  countdownEl.textContent = count;
+
+  // 반복 촬영 시 기존 야광 제거
+  video.classList.remove("video-neon");
+  if (previewDiv.firstChild) {
+      previewDiv.firstChild.classList.remove("video-neon");
+  }
+
+  let timer = setInterval(() => {
+    count--;
+    if (count > 0) {
+      countdownEl.textContent = count;
+    } else {
+      clearInterval(timer);
+      countdownEl.textContent = "";
+
+      // 카운트 완료 후 야광 효과 재적용
+      video.classList.add("video-neon");
+
+      capture();
+    }
+  }, 1000);
+}
+
+function capture() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+  let image = canvas.toDataURL("image/jpeg");
+
+  // preview에 이미지 표시 + 야광 테두리 적용
+  previewDiv.innerHTML = `<img src="${image}" class="video-neon">`;
+
+  // 서버에 업로드
+  fetch("/upload", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({image})
+  }).then(res => {
+    if (res.ok) console.log("📸 사진 업로드 완료");
+  });
 }
 </script>
 </body>

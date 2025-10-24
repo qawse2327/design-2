@@ -4,10 +4,55 @@
 <meta charset="UTF-8">
 <title>의류 선택</title>
 <style>
-body { background:#000; color:white; text-align:center; font-family:"Noto Sans KR", sans-serif; }
-.grid img { width:120px; cursor:pointer; margin:5px; border-radius:10px; }
-.grid img.selected { outline:3px solid #00ffcc; box-shadow:0 0 15px #00ffcc; }
-button { margin:10px; padding:10px 20px; cursor:pointer; font-size:16px; }
+body { 
+    background:#000; 
+    color:white; 
+    text-align:center; 
+    font-family:"Noto Sans KR", sans-serif; 
+    margin:0; 
+    padding:0;
+}
+.grid { 
+    display:flex; 
+    flex-wrap:wrap; 
+    justify-content:center; 
+    overflow-y:auto; 
+    max-height:70vh; /* 스마트미러 세로 화면에 맞춤 */
+    margin-bottom:10px;
+}
+.grid img { 
+    width:160px; 
+    height:160px; 
+    object-fit: cover; 
+    cursor:pointer; 
+    margin:5px; 
+    border-radius:10px; 
+    transition: 0.3s all;
+}
+.grid img.selected { 
+    outline:3px solid #0ff; /* 야광 청록색 */
+    box-shadow:0 0 15px #0ff, 0 0 25px #0ff, 0 0 35px #0ff;
+}
+button { 
+    margin:10px; 
+    padding:10px 20px; 
+    cursor:pointer; 
+    font-size:16px; 
+    border:none; 
+    border-radius:8px; 
+    background:#111; 
+    color:#0ff; 
+    text-shadow: 0 0 5px #0ff, 0 0 10px #0ff; /* 야광 효과 */
+    transition: 0.3s all;
+}
+button:hover {
+    box-shadow:0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+}
+h2 { 
+    color:#0ff; 
+    text-shadow:0 0 5px #0ff,0 0 10px #0ff; 
+    margin-bottom:5px;
+}
 </style>
 </head>
 <body>
@@ -29,8 +74,6 @@ button { margin:10px; padding:10px 20px; cursor:pointer; font-size:16px; }
 
 <button onclick="wearSelected()">착용</button>
 
-<div id="result"></div>
-
 <script>
 let selectedTop = null, selectedBottom = null;
 
@@ -49,10 +92,19 @@ function wearSelected(){
   if(!selectedTop && !selectedBottom) return alert("옷을 선택해주세요!");
   let mode = selectedTop && selectedBottom ? "both" : selectedTop ? "top" : "bottom";
   let data = {top: selectedTop?.src, bottom: selectedBottom?.src, mode};
+
   fetch("/tryon", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)})
     .then(res => res.json())
     .then(res => {
-      document.getElementById("result").innerHTML = `<img src="${res.result}" width="350">`;
+      if(res.result){
+        window.location.href = "/result"; // 합성 결과 페이지로 이동
+      } else {
+        alert("합성에 실패했습니다. 다시 시도해주세요.");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("서버 오류 발생! 다시 시도해주세요.");
     });
 }
 </script>

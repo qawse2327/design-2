@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from fashn_tryon import run_tryon
 import os, base64
 from PIL import Image
 from io import BytesIO
 
 app = Flask(__name__)
+app.secret_key = "some_secret_key"  # 세션 사용
 
 TOP_DIR = "static/tops"
 BOTTOM_DIR = "static/bottoms"
@@ -60,13 +61,19 @@ def tryon():
         outfit = f"{OUTFIT_DIR}/set_{top_num}_{bottom_num}.png"
         result_path = run_tryon(USER_IMG, outfit, f"result_set_{top_num}_{bottom_num}.jpg")
 
+    # 마지막 결과를 세션에 저장
+    session["last_result"] = result_path
+
     return jsonify({"result": result_path})
 
 # 결과 페이지
 @app.route("/result")
 def result_page():
-    last_result = sorted(os.listdir(RESULT_DIR), key=lambda x: os.path.getmtime(os.path.join(RESULT_DIR, x)))[-1]
-    return render_template("result.html", result_image=f"{RESULT_DIR}/{last_result}")
+    last_result = session.get("last_result")
+    if not last_result or not os.path.exists(last_result):
+        # 기본 이미지
+        last_result = f"{RESULT_DIR}/default.jpg"
+    return render_template("result.html", result_image=last_result)
 
 if __name__ == "__main__":
     app.run(debug=True)

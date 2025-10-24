@@ -4,13 +4,41 @@
 <meta charset="UTF-8">
 <title>착용 결과</title>
 <style>
-body { background:#000; color:white; text-align:center; font-family:"Noto Sans KR", sans-serif; }
-button { margin:10px; padding:10px 20px; cursor:pointer; font-size:16px; }
+body { 
+    background:#000; 
+    color:white; 
+    text-align:center; 
+    font-family:"Noto Sans KR", sans-serif; 
+    margin:0;
+    padding:0;
+}
+h1 { 
+    color:#0ff; 
+    text-shadow:0 0 5px #0ff,0 0 10px #0ff; 
+    margin-top:20px; 
+}
+img { 
+    width:80%;           /* 스마트미러 세로 화면에 맞춤 */
+    max-width:600px;     /* 최대 크기 제한 */
+    margin-top:20px; 
+    border-radius:10px; 
+    box-shadow:0 0 15px #0ff, 0 0 25px #0ff, 0 0 35px #0ff; /* 야광 테두리 */
+}
+button { 
+    margin:20px; 
+    padding:10px 20px; 
+    cursor:pointer; 
+    font-size:16px; 
+    border:none; 
+    border-radius:8px; 
+    background:#111; 
+    color:#0ff; 
+}
 </style>
 </head>
 <body>
 <h1>착용 결과</h1>
-<img src="{{ result_image }}" width="350">
+<img src="{{ result_image }}">
 <br>
 <button onclick="location.href='/'">다시 시도</button>
 </body>
