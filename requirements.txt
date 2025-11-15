@@ -1,0 +1,6 @@
+flask
+opencv-python
+mediapipe
+pillow
+requests
+google-generativeai
